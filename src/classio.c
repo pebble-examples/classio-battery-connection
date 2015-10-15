@@ -45,7 +45,11 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(s_connection_layer, GColorClear);
   text_layer_set_font(s_connection_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_text_alignment(s_connection_layer, GTextAlignmentCenter);
+#if defined(PBL_SDK_2)
   handle_bluetooth(bluetooth_connection_service_peek());
+#elif defined(PBL_SDK_3)
+  handle_bluetooth(connection_service_peek_pebble_app_connection());
+#endif
 
   s_battery_layer = text_layer_create(GRect(0, 120, bounds.size.w, 34));
   text_layer_set_text_color(s_battery_layer, GColorWhite);
@@ -62,7 +66,14 @@ static void main_window_load(Window *window) {
 
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
   battery_state_service_subscribe(handle_battery);
+
+#if defined(PBL_SDK_2)
   bluetooth_connection_service_subscribe(handle_bluetooth);
+#elif defined(PBL_SDK_3)
+  connection_service_subscribe((ConnectionHandlers) {
+    .pebble_app_connection_handler = handle_bluetooth
+  });
+#endif
 
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
@@ -72,7 +83,11 @@ static void main_window_load(Window *window) {
 static void main_window_unload(Window *window) {
   tick_timer_service_unsubscribe();
   battery_state_service_unsubscribe();
+#if defined(PBL_SDK_2)
   bluetooth_connection_service_unsubscribe();
+#elif defined(PBL_SDK_3)
+  connection_service_unsubscribe();
+#endif
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_connection_layer);
   text_layer_destroy(s_battery_layer);
